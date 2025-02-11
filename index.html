@@ -72,7 +72,7 @@
             text-align: center;
             font-size: 24px;
         }
-        .copy-btn {
+        .copy-btn, .undo-btn, .clear-btn, .discount-btn {
             background-color: #007BFF;
             color: #fff;
             padding: 10px 20px;
@@ -80,8 +80,9 @@
             border-radius: 5px;
             cursor: pointer;
             font-size: 18px;
+            margin-top: 10px;
         }
-        .copy-btn:hover {
+        .copy-btn:hover, .undo-btn:hover, .clear-btn:hover, .discount-btn:hover {
             background-color: #0056b3;
         }
         .discount-note {
@@ -124,7 +125,10 @@
                 <p>Total: $<span id="total-price">0.00</span></p>
             </div>
             <button class="copy-btn" id="copy-order-btn">Copy Order</button>
-            <p class="discount-note">Note: 10% discount applies to all items except Engines, Tyres, and some Performance parts.</p>
+            <button class="undo-btn" id="undo-btn">Undo Last Item</button>
+            <button class="clear-btn" id="clear-btn">Clear All</button>
+            <button class="discount-btn" id="discount-btn">Apply 10% Discount</button>
+            <p class="discount-note">Note: 10% discount applies when you click the "Apply 10% Discount" button.</p>
         </div>
     </div>
 </div>
@@ -174,11 +178,13 @@
 
     let selectedItems = [];
     let totalPrice = 0;
+    let discountApplied = false;
 
     const itemsList = document.getElementById('items-list');
     const totalPriceElement = document.getElementById('total-price');
+    const discountButton = document.getElementById('discount-btn');
 
-    items.forEach((item, index) => {
+    items.forEach((item) => {
         const itemElement = document.createElement('div');
         itemElement.classList.add('item');
         itemElement.innerHTML = `
@@ -197,7 +203,6 @@
             itemElement.classList.add('selected');
             selectedItems.push(item.name);
         }
-
         updateTotalPrice();
     }
 
@@ -207,14 +212,38 @@
             if (!item) return sum;
 
             let price = item.price;
-            if (!excludedDiscountItems.includes(item.name)) {
+            if (discountApplied && !excludedDiscountItems.includes(item.name)) {
                 price = price * 0.9; // Apply 10% discount
             }
             return sum + price;
         }, 0);
-
         totalPriceElement.innerText = totalPrice.toFixed(2);
     }
+
+    document.getElementById('undo-btn').onclick = () => {
+        const lastItemName = selectedItems.pop();
+        if (lastItemName) {
+            const lastItemElement = Array.from(itemsList.children).find(item => item.innerText.includes(lastItemName));
+            if (lastItemElement) lastItemElement.classList.remove('selected');
+            updateTotalPrice();
+        }
+    };
+
+    document.getElementById('clear-btn').onclick = () => {
+        selectedItems = [];
+        discountApplied = false;
+        document.getElementById('customer-name').value = '';
+        document.getElementById('license-plate').value = '';
+        document.getElementById('vehicle').value = '';
+        updateTotalPrice();
+        Array.from(itemsList.children).forEach(item => item.classList.remove('selected'));
+    };
+
+    document.getElementById('discount-btn').onclick = () => {
+        discountApplied = !discountApplied;
+        discountButton.innerText = discountApplied ? 'Remove 10% Discount' : 'Apply 10% Discount';
+        updateTotalPrice();
+    };
 
     document.getElementById('copy-order-btn').onclick = () => {
         const customerName = document.getElementById('customer-name').value;
