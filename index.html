@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Al's Garage POS System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #222;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            width: 80%;
+            margin: auto;
+            padding-top: 20px;
+        }
+        header {
+            text-align: center;
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+        .order-details, .customer-details {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .order-details div, .customer-details div {
+            flex: 1;
+            padding: 10px;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            margin: 10px 0;
+            font-size: 16px;
+            background-color: #333;
+            color: #fff;
+            border: 1px solid #555;
+        }
+        .items-list {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .item {
+            background-color: #444;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: transform 0.3s ease;
+        }
+        .item:hover {
+            transform: scale(1.1);
+        }
+        .item.selected {
+            background-color: #4CAF50;
+        }
+        .item-name {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+        .item-price {
+            font-size: 16px;
+        }
+        .total {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 24px;
+        }
+        .copy-btn {
+            background-color: #007BFF;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 18px;
+        }
+        .copy-btn:hover {
+            background-color: #0056b3;
+        }
+        .discount-note {
+            color: #ff8c00;
+            text-align: center;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>Al's Garage POS System</header>
+
+    <div class="customer-details">
+        <div>
+            <label for="customer-name">Customer Name:</label>
+            <input type="text" id="customer-name" placeholder="Enter Customer Name">
+        </div>
+        <div>
+            <label for="license-plate">License Plate:</label>
+            <input type="text" id="license-plate" placeholder="Enter License Plate">
+        </div>
+        <div>
+            <label for="vehicle">Vehicle Make/Model:</label>
+            <input type="text" id="vehicle" placeholder="Enter Make/Model">
+        </div>
+    </div>
+
+    <div class="order-details">
+        <div>
+            <label for="items">Select Items:</label>
+            <div class="items-list" id="items-list">
+                <!-- Dynamic Item Buttons will be injected here -->
+            </div>
+        </div>
+
+        <div>
+            <div class="total">
+                <p>Total: $<span id="total-price">0.00</span></p>
+            </div>
+            <button class="copy-btn" id="copy-order-btn">Copy Order</button>
+            <p class="discount-note">Note: 10% discount applies to all items except Engines, Tyres, and some Performance parts.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    const items = [
+        { name: 'Repair', price: 4500 },
+        { name: 'Respray', price: 3000 },
+        { name: 'Tire Replacement', price: 1500 },
+        { name: 'Clutch Replacement', price: 1600 },
+        { name: 'Air Filter', price: 1000 },
+        { name: 'Spark Plug', price: 400 },
+        { name: 'Suspension Parts', price: 1650 },
+        { name: 'Brakepad Replacement', price: 250 },
+        { name: 'Full Service', price: 18650 },
+        { name: '14 Engine', price: 30000 },
+        { name: 'V6 Engine', price: 45000 },
+        { name: 'V8 Engine', price: 100000 },
+        { name: 'V12 Engine', price: 500000 },
+        { name: 'Turbo', price: 35000 },
+        { name: 'EV Motor', price: 3300 },
+        { name: 'EV Coolant', price: 5220 },
+        { name: 'AWD', price: 50000 },
+        { name: 'RWD', price: 50000 },
+        { name: 'FWD', price: 50000 },
+        { name: 'Slick Tyres', price: 11340 },
+        { name: 'Semi Slick Tyres', price: 11200 },
+        { name: 'Offroad Tyres', price: 11200 },
+        { name: 'Drift Kit', price: 100000 },
+        { name: 'Lighting Controller', price: 5000 },
+        { name: 'Stance Kit', price: 10000 },
+        { name: 'Engine Oil', price: 850 },
+        { name: 'Vehicle Wheels', price: 12000 },
+        { name: 'Tyre Smoke', price: 4000 },
+        { name: 'Extra', price: 3000 },
+        { name: 'Cleaning', price: 500 },
+        { name: 'Performance Part', price: 20000 },
+        { name: 'Ceramic Break', price: 25000 },
+        { name: 'Cosmetic Part', price: 4500 }
+    ];
+
+    const excludedDiscountItems = [
+        '14 Engine', 'V6 Engine', 'V8 Engine', 'V12 Engine', 'Turbo',
+        'AWD', 'RWD', 'FWD', 'Slick Tyres', 'Semi Slick Tyres', 
+        'Offroad Tyres', 'Drift Kit', 'Ceramic Break'
+    ];
+
+    let selectedItems = [];
+    let totalPrice = 0;
+
+    const itemsList = document.getElementById('items-list');
+    const totalPriceElement = document.getElementById('total-price');
+
+    items.forEach((item, index) => {
+        const itemElement = document.createElement('div');
+        itemElement.classList.add('item');
+        itemElement.innerHTML = `
+            <div class="item-name">${item.name}</div>
+            <div class="item-price">$${item.price}</div>
+        `;
+        itemElement.onclick = () => toggleItemSelection(item, itemElement);
+        itemsList.appendChild(itemElement);
+    });
+
+    function toggleItemSelection(item, itemElement) {
+        if (itemElement.classList.contains('selected')) {
+            itemElement.classList.remove('selected');
+            selectedItems = selectedItems.filter(i => i !== item.name);
+        } else {
+            itemElement.classList.add('selected');
+            selectedItems.push(item.name);
+        }
+
+        updateTotalPrice();
+    }
+
+    function updateTotalPrice() {
+        totalPrice = selectedItems.reduce((sum, selectedItemName) => {
+            const item = items.find(i => i.name === selectedItemName);
+            if (!item) return sum;
+
+            let price = item.price;
+            if (!excludedDiscountItems.includes(item.name)) {
+                price = price * 0.9; // Apply 10% discount
+            }
+            return sum + price;
+        }, 0);
+
+        totalPriceElement.innerText = totalPrice.toFixed(2);
+    }
+
+    document.getElementById('copy-order-btn').onclick = () => {
+        const customerName = document.getElementById('customer-name').value;
+        const vehicle = document.getElementById('vehicle').value;
+        const license = document.getElementById('license-plate').value;
+
+        const orderDetails = selectedItems.join(', ');
+
+        const orderSummary = `
+\`\`\`
+Customer Name: ${customerName}
+Vehicle | Make/Model: ${vehicle}
+Plate: ${license}
+Upgrades Purchased: ${orderDetails}
+Price Charged: $${totalPrice.toFixed(2)}
+SHOP: Al's Garage
+\`\`\`
+`;
+
+        navigator.clipboard.writeText(orderSummary)
+            .then(() => alert('Order copied to clipboard!'))
+            .catch(err => alert('Failed to copy order: ' + err));
+    };
+</script>
+
+</body>
+</html>
