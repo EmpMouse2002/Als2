@@ -42,7 +42,7 @@
         }
         .items-list {
             display: grid;
-            grid-template-columns: repeat(6, 1fr); /* 6 columns */
+            grid-template-columns: repeat(7, 1fr); /* 7 columns */
             gap: 15px;
             margin-bottom: 20px;
         }
@@ -85,17 +85,12 @@
         .copy-btn:hover, .undo-btn:hover, .clear-btn:hover, .discount-btn:hover {
             background-color: #0056b3;
         }
-        .discount-note {
-            color: #ff8c00;
-            text-align: center;
-            margin-top: 10px;
-        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <header>Al's Garage POS</header>
+    <header>Al's Garage POS System</header>
 
     <div class="customer-details">
         <div>
@@ -128,7 +123,6 @@
             <button class="undo-btn" id="undo-btn">Undo Last Item</button>
             <button class="clear-btn" id="clear-btn">Clear All</button>
             <button class="discount-btn" id="discount-btn">Apply 10% Discount</button>
-            <p class="discount-note">Note: 10% discount applies when you click the "Apply 10% Discount" button.</p>
         </div>
     </div>
 </div>
