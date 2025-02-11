@@ -122,7 +122,7 @@
 
         <div>
             <div class="total">
-                <p>Total: $<span id="total-price">0.00</span></p>
+                <p>Total: $<span id="total-price">0</span></p>
             </div>
             <button class="copy-btn" id="copy-order-btn">Copy Order</button>
             <button class="undo-btn" id="undo-btn">Undo Last Item</button>
@@ -196,35 +196,60 @@
     });
 
     function toggleItemSelection(item, itemElement) {
-        if (itemElement.classList.contains('selected')) {
-            itemElement.classList.remove('selected');
-            selectedItems = selectedItems.filter(i => i !== item.name);
+        // Track the number of times an item is clicked
+        let itemIndex = selectedItems.findIndex(i => i.name === item.name);
+        
+        if (itemIndex >= 0) {
+            selectedItems[itemIndex].quantity++;
         } else {
-            itemElement.classList.add('selected');
-            selectedItems.push(item.name);
+            selectedItems.push({ name: item.name, quantity: 1 });
         }
+
         updateTotalPrice();
+        updateItemDisplay();
+    }
+
+    function updateItemDisplay() {
+        Array.from(itemsList.children).forEach((itemElement, index) => {
+            const item = items[index];
+            const selectedItem = selectedItems.find(si => si.name === item.name);
+            
+            if (selectedItem) {
+                itemElement.classList.add('selected');
+                itemElement.innerHTML = `
+                    <div class="item-name">${item.name} X${selectedItem.quantity}</div>
+                    <div class="item-price">$${item.price}</div>
+                `;
+            } else {
+                itemElement.classList.remove('selected');
+                itemElement.innerHTML = `
+                    <div class="item-name">${item.name}</div>
+                    <div class="item-price">$${item.price}</div>
+                `;
+            }
+        });
     }
 
     function updateTotalPrice() {
-        totalPrice = selectedItems.reduce((sum, selectedItemName) => {
-            const item = items.find(i => i.name === selectedItemName);
+        totalPrice = selectedItems.reduce((sum, selectedItem) => {
+            const item = items.find(i => i.name === selectedItem.name);
             if (!item) return sum;
 
-            let price = item.price;
+            let price = item.price * selectedItem.quantity;
             if (discountApplied && !excludedDiscountItems.includes(item.name)) {
                 price = price * 0.9; // Apply 10% discount
             }
             return sum + price;
         }, 0);
-        totalPriceElement.innerText = totalPrice.toFixed(2);
+        
+        totalPrice = Math.round(totalPrice); // Round to the nearest dollar
+        totalPriceElement.innerText = totalPrice;
     }
 
     document.getElementById('undo-btn').onclick = () => {
-        const lastItemName = selectedItems.pop();
-        if (lastItemName) {
-            const lastItemElement = Array.from(itemsList.children).find(item => item.innerText.includes(lastItemName));
-            if (lastItemElement) lastItemElement.classList.remove('selected');
+        const lastItem = selectedItems.pop();
+        if (lastItem) {
+            updateItemDisplay();
             updateTotalPrice();
         }
     };
@@ -235,8 +260,8 @@
         document.getElementById('customer-name').value = '';
         document.getElementById('license-plate').value = '';
         document.getElementById('vehicle').value = '';
+        updateItemDisplay();
         updateTotalPrice();
-        Array.from(itemsList.children).forEach(item => item.classList.remove('selected'));
     };
 
     document.getElementById('discount-btn').onclick = () => {
@@ -250,7 +275,7 @@
         const vehicle = document.getElementById('vehicle').value;
         const license = document.getElementById('license-plate').value;
 
-        const orderDetails = selectedItems.join(', ');
+        const orderDetails = selectedItems.map(item => `${item.name} X${item.quantity}`).join(', ');
 
         const orderSummary = `
 \`\`\`
@@ -258,7 +283,7 @@ Customer Name: ${customerName}
 Vehicle | Make/Model: ${vehicle}
 Plate: ${license}
 Upgrades Purchased: ${orderDetails}
-Price Charged: $${totalPrice.toFixed(2)}
+Price Charged: $${totalPrice}
 SHOP: Al's Garage
 \`\`\`
 `;
